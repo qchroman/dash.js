@@ -28,74 +28,12 @@
  *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  */
-import FactoryMaker from '../../core/FactoryMaker.js';
 
-function MediaSourceExtensions() {
+import MediaPlayer from "./streaming/MediaPlayer.js";
+import Protection from "./streaming/protection/Protection.js";
 
-    let instance;
 
-    function createMediaSource() {
-
-        var hasWebKit = ('WebKitMediaSource' in window);
-        var hasMediaSource = ('MediaSource' in window);
-
-        if (hasMediaSource) {
-            return new MediaSource();
-        } else if (hasWebKit) {
-            return new WebKitMediaSource();
-        }
-
-        return null;
-    }
-
-    function attachMediaSource(source, videoModel) {
-
-        var objectURL = window.URL.createObjectURL(source);
-
-        videoModel.setSource(objectURL);
-
-        return objectURL;
-    }
-
-    function detachMediaSource(videoModel) {
-        // it seems that any value passed to the setSource is cast to a sting when setting element.src,
-        // so we cannot use null or undefined to reset the element. Use empty string instead.
-        videoModel.setSource('');
-    }
-
-    function setDuration(source, value) {
-
-        if (source.duration != value)
-            source.duration = value;
-
-        return source.duration;
-    }
-
-    function signalEndOfStream(source) {
-
-        var buffers = source.sourceBuffers;
-        var ln = buffers.length;
-        var i = 0;
-
-        if (source.readyState !== 'open') return;
-
-        for (i; i < ln; i++) {
-            if (buffers[i].updating) return;
-            if (buffers[i].buffered.length === 0) return;
-        }
-
-        source.endOfStream();
-    }
-
-    instance = {
-        createMediaSource: createMediaSource,
-        attachMediaSource: attachMediaSource,
-        detachMediaSource: detachMediaSource,
-        setDuration: setDuration,
-        signalEndOfStream: signalEndOfStream
-    };
-
-    return instance;
-}
-
-export default FactoryMaker.getSingletonFactory(MediaSourceExtensions);
+// Shove both of these into the global scope
+var context = window || global;
+context.MediaPlayer = MediaPlayer;
+context.Protection = Protection;
