@@ -155,7 +155,7 @@ function RepresentationController() {
 
         availableRepresentations = updateRepresentations(adaptation);
 
-        if (data === null) {
+        if (data === null && type !== 'fragmentedText') {
             averageThroughput = abrController.getAverageThroughput(type);
             bitrate = averageThroughput || abrController.getInitialBitrateFor(type, streamInfo);
             quality = abrController.getQualityForBitrate(streamProcessor.getMediaInfo(), bitrate);
@@ -184,9 +184,9 @@ function RepresentationController() {
     function addRepresentationSwitch() {
         var now = new Date();
         var currentRepresentation = getCurrentRepresentation();
-        var currentVideoTime = playbackController.getTime();
+        var currentVideoTimeMs = playbackController.getTime() * 1000;
 
-        metricsModel.addRepresentationSwitch(currentRepresentation.adaptation.type, now, currentVideoTime, currentRepresentation.id);
+        metricsModel.addRepresentationSwitch(currentRepresentation.adaptation.type, now, currentVideoTimeMs, currentRepresentation.id);
     }
 
     function addDVRMetric() {

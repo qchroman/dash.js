@@ -29,6 +29,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 import FactoryMaker from '../core/FactoryMaker.js';
+import X2JS from '../../externals/xml2json.js';
 
 const SECONDS_IN_HOUR = 60 * 60; // Expression of an hour in seconds
 const SECONDS_IN_MIN = 60; // Expression of a minute in seconds
@@ -531,7 +532,7 @@ function TTMLParser() {
         // Separate the values in pairs.
         var hexMatrice = hex.match(/.{2}/g);
         // Convert the alpha value in decimal between 0 and 1.
-        var alpha = parseFloat(parseInt((parseInt(hexMatrice[3], 16) / 255) * 1000) / 1000);
+        var alpha = parseFloat(parseInt((parseInt(hexMatrice[3], 16) / 255) * 1000, 10) / 1000);
         // Get the standard RGB value.
         var rgb = hexMatrice.slice(0, 3).map(function (i) {
             return parseInt(i, 16);
@@ -628,17 +629,17 @@ function TTMLParser() {
             properties.push('font-size:' + valueFtSizeInPx);
         }
         // Line height is computed from the cellResolution.
-        if ('line-heigt' in cueStyle) {
+        if ('line-height' in cueStyle) {
             if (cueStyle['line-height'] === 'normal') {
-                properties.push('line-heigth: normal;');
+                properties.push('line-height: normal;');
             } else {
-                var valueLHSize = parseFloat(cueStyle['line-heigt'].slice(cueStyle['line-heigt'].indexOf(':') + 1,
-                    cueStyle['line-heigt'].indexOf('%')));
+                var valueLHSize = parseFloat(cueStyle['line-height'].slice(cueStyle['line-height'].indexOf(':') + 1,
+                    cueStyle['line-height'].indexOf('%')));
                 if ('id' in cueStyle) {
                     lineHeight[cueStyle.id] = valueLHSize;
                 }
                 var valueLHSizeInPx = valueLHSize / 100 * cellUnit[1] + 'px;';
-                properties.push(key + ':' + valueLHSizeInPx);
+                properties.push('line-height' + ':' + valueLHSizeInPx);
             }
         }
         // Font-family can be specified by a generic family name or a custom family name.

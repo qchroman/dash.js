@@ -1,4 +1,4 @@
-﻿/**
+/**
  * The copyright in this software is being made available under the BSD License,
  * included below. This software may be subject to other third party and contributor
  * rights, including patent rights, and no such rights are granted under this license.
@@ -29,7 +29,7 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 import SwitchRequest from '../SwitchRequest.js';
-import BufferController from '../../controllers/BufferController.js';
+import MediaPlayerModel from '../../models/MediaPlayerModel.js';
 import AbrController from '../../controllers/AbrController.js';
 import FactoryMaker from '../../../core/FactoryMaker.js';
 import Debug from '../../../core/Debug.js';
@@ -39,8 +39,17 @@ function BufferOccupancyRule(config) {
     let instance;
     let context = this.context;
     let log = Debug(context).getInstance().log;
+
     let metricsModel = config.metricsModel;
-    let lastSwitchTime = 0;
+    let metricsExt = config.metricsExt;
+
+    let lastSwitchTime,
+        mediaPlayerModel;
+
+    function setup() {
+        lastSwitchTime = 0;
+        mediaPlayerModel = MediaPlayerModel(context).getInstance();
+    }
 
     function execute (rulesContext, callback) {
         var now = new Date().getTime() / 1000;
@@ -52,7 +61,7 @@ function BufferOccupancyRule(config) {
         var streamProcessor = rulesContext.getStreamProcessor();
         var abrController = streamProcessor.getABRController();
         var metrics = metricsModel.getReadOnlyMetricsFor(mediaType);
-        var lastBufferLevelVO = (metrics.BufferLevel.length > 0) ? metrics.BufferLevel[metrics.BufferLevel.length - 1] : null;
+        var lastBufferLevel = metricsExt.getCurrentBufferLevel(metrics);
         var lastBufferStateVO = (metrics.BufferState.length > 0) ? metrics.BufferState[metrics.BufferState.length - 1] : null;
         var isBufferRich = false;
         var maxIndex = mediaInfo.representationCount - 1;
@@ -64,11 +73,12 @@ function BufferOccupancyRule(config) {
             return;
         }
 
-        if (lastBufferLevelVO !== null && lastBufferStateVO !== null) {
+        if (lastBufferStateVO !== null) {
             // This will happen when another rule tries to switch from top to any other.
             // If there is enough buffer why not try to stay at high level.
-            if (lastBufferLevelVO.level > lastBufferStateVO.target) {
-                isBufferRich = (lastBufferLevelVO.level - lastBufferStateVO.target) > BufferController.RICH_BUFFER_THRESHOLD;
+            if (lastBufferLevel > lastBufferStateVO.target) {
+                isBufferRich = (lastBufferLevel - lastBufferStateVO.target) > mediaPlayerModel.getRichBufferThreshold();
+
                 if (isBufferRich && mediaInfo.representationCount > 1) {
                     switchRequest = SwitchRequest(context).create(maxIndex, SwitchRequest.STRONG);
                 }
@@ -92,6 +102,8 @@ function BufferOccupancyRule(config) {
         execute: execute,
         reset: reset
     };
+
+    setup();
 
     return instance;
 }
